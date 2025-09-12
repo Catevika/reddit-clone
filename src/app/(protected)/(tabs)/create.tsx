@@ -1,5 +1,5 @@
 import {AntDesign} from '@expo/vector-icons';
-import {router} from 'expo-router';
+import {Link, router} from 'expo-router';
 import {useState} from 'react';
 import {
 	KeyboardAvoidingView,
@@ -45,10 +45,14 @@ export default function CreateScreen() {
 				behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
 				style={{flex: 1}}>
 				<ScrollView showsVerticalScrollIndicator={false}>
-					<View style={styles.communityContainer}>
-						<Text style={styles.rStyle}>/r</Text>
-						<Text style={{fontWeight: 600}}>Select a community</Text>
-					</View>
+					<Link
+						href={'/groupSelector'}
+						asChild>
+						<Pressable style={styles.communityContainer}>
+							<Text style={styles.rStyle}>/r</Text>
+							<Text style={{fontWeight: 600}}>Select a community</Text>
+						</Pressable>
+					</Link>
 					{/* INPUTS */}
 					<TextInput
 						value={title}
