@@ -1,3 +1,4 @@
+import {SignOutButton} from '@/src/components/SignOutButton';
 import {AntDesign, Feather, Ionicons} from '@expo/vector-icons';
 import {Tabs} from 'expo-router';
 
@@ -6,6 +7,7 @@ export default function TabLayout() {
 		<Tabs
 			screenOptions={{
 				tabBarActiveTintColor: 'black',
+				headerRight: () => <SignOutButton />,
 			}}>
 			<Tabs.Screen
 				name='index'
