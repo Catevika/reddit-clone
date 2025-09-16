@@ -1,7 +1,11 @@
 import groups from '@/assets/data/groups.json';
-import {AntDesign, Feather, Ionicons} from '@expo/vector-icons';
+import {selectedGroupAtom} from '@/src/atoms';
+import type {Group} from '@/types/types';
+import {Feather, Ionicons} from '@expo/vector-icons';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import {router} from 'expo-router';
-import {useState} from 'react';
+import {useSetAtom} from 'jotai';
+import React, {useState} from 'react';
 import {
 	FlatList,
 	Image,
@@ -14,38 +18,44 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
-export default function groupSelector() {
+export default function GroupSelector() {
 	const [searchValue, setSearchValue] = useState<string>('');
+	const setGroup = useSetAtom(selectedGroupAtom);
 
 	const filteredGroups = groups.filter((group) =>
 		group.name.toLowerCase().includes(searchValue.toLowerCase()),
 	);
 
+	const onGroupSelected = (group: Group) => {
+		setGroup(group);
+		router.back();
+	};
+
 	return (
-		<SafeAreaView style={{marginHorizontal: 10, flex: 1}}>
-			{/* HEADER */}
-			<View style={{flexDirection: 'row', alignItems: 'center', padding: 10}}>
-				<AntDesign
-					name='close'
-					size={30}
-					color='black'
-					onPress={() => router.back()}
-				/>
-				<Text
-					style={{
-						fontSize: 16,
-						fontWeight: 'bold',
-						textAlign: 'center',
-						flex: 1,
-						paddingRight: 30,
-					}}>
-					Post to
-				</Text>
-			</View>
-			{/* SEARCH BAR */}
-			<KeyboardAvoidingView
-				behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-				style={{flex: 1}}>
+		<KeyboardAvoidingView
+			behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+			style={{flex: 1, backgroundColor: 'white', paddingHorizontal: 10}}>
+			<SafeAreaView style={{flex: 1}}>
+				{/* HEADER */}
+				<View style={{flexDirection: 'row', alignItems: 'center'}}>
+					<AntDesign
+						name='close'
+						size={30}
+						color='black'
+						onPress={() => router.back()}
+					/>
+					<Text
+						style={{
+							flex: 1,
+							textAlign: 'center',
+							paddingRight: 30,
+							fontWeight: '600',
+							fontSize: 15,
+						}}>
+						Post to
+					</Text>
+				</View>
+				{/* SEARCH BAR */}
 				<View
 					style={{
 						flexDirection: 'row',
@@ -64,9 +74,9 @@ export default function groupSelector() {
 					<TextInput
 						value={searchValue}
 						placeholder='Search for a community'
-						placeholderTextColor='grey'
-						onChangeText={setSearchValue}
+						placeholderTextColor={'gray'}
 						style={{paddingVertical: 10, flex: 1}}
+						onChangeText={(text) => setSearchValue(text)}
 					/>
 					{searchValue && (
 						<Ionicons
@@ -77,8 +87,9 @@ export default function groupSelector() {
 						/>
 					)}
 				</View>
+				{/* LIST OF GROUPS */}
 				<FlatList
-					showsVerticalScrollIndicator={false}
+					style={{marginTop: 10}}
 					data={filteredGroups}
 					keyExtractor={(item) => item.id}
 					renderItem={({item}) => (
@@ -87,18 +98,21 @@ export default function groupSelector() {
 								flexDirection: 'row',
 								alignItems: 'center',
 								gap: 5,
-								marginBottom: 10,
-								borderRadius: 20,
-							}}>
+								marginBottom: 20,
+							}}
+							onPress={() => onGroupSelected(item)}>
 							<Image
 								source={{uri: item.image}}
 								style={{width: 40, aspectRatio: 1, borderRadius: 20}}
 							/>
-							<Text style={{fontWeight: 600}}>{item.name}</Text>
+							<View>
+								<Text style={{fontWeight: '600'}}>{item.name}</Text>
+								<Text style={{color: 'grey'}}>recently visited</Text>
+							</View>
 						</Pressable>
 					)}
 				/>
-			</KeyboardAvoidingView>
-		</SafeAreaView>
+			</SafeAreaView>
+		</KeyboardAvoidingView>
 	);
 }

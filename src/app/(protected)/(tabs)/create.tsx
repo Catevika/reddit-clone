@@ -1,7 +1,10 @@
+import {selectedGroupAtom} from '@/src/atoms';
 import {AntDesign} from '@expo/vector-icons';
 import {Link, router} from 'expo-router';
+import {useAtom} from 'jotai';
 import {useState} from 'react';
 import {
+	Image,
 	KeyboardAvoidingView,
 	Platform,
 	Pressable,
@@ -16,10 +19,12 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 export default function CreateScreen() {
 	const [title, setTitle] = useState<string>('');
 	const [bodyText, setBodyText] = useState<string>('');
+	const [group, setGroup] = useAtom(selectedGroupAtom);
 
 	const goBack = () => {
 		setTitle('');
 		setBodyText('');
+		setGroup(null);
 		router.back();
 	};
 
@@ -49,8 +54,22 @@ export default function CreateScreen() {
 						href={'/groupSelector'}
 						asChild>
 						<Pressable style={styles.communityContainer}>
-							<Text style={styles.rStyle}>/r</Text>
-							<Text style={{fontWeight: 600}}>Select a community</Text>
+							{group ? (
+								<>
+									<Image
+										source={{uri: group.image}}
+										width={20}
+										height={20}
+										borderRadius={10}
+									/>
+									<Text style={{fontWeight: 600}}>{group.name}</Text>
+								</>
+							) : (
+								<>
+									<Text style={styles.rStyle}>/r</Text>
+									<Text style={{fontWeight: 600}}>Select a community</Text>
+								</>
+							)}
 						</Pressable>
 					</Link>
 					{/* INPUTS */}
