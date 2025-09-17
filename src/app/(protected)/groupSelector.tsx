@@ -1,12 +1,14 @@
-import groups from '@/assets/data/groups.json';
 import {selectedGroupAtom} from '@/src/atoms';
-import type {Group} from '@/types/types';
+import {fetchGroups} from '@/src/services/groupService';
+import type {Tables} from '@/types/database.types';
 import {Feather, Ionicons} from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import {useQuery} from '@tanstack/react-query';
 import {router} from 'expo-router';
 import {useSetAtom} from 'jotai';
 import React, {useState} from 'react';
 import {
+	ActivityIndicator,
 	FlatList,
 	Image,
 	KeyboardAvoidingView,
@@ -18,13 +20,30 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
+type Group = Tables<'groups'>;
+
 export default function GroupSelector() {
 	const [searchValue, setSearchValue] = useState<string>('');
 	const setGroup = useSetAtom(selectedGroupAtom);
 
-	const filteredGroups = groups.filter((group) =>
-		group.name.toLowerCase().includes(searchValue.toLowerCase()),
-	);
+	const {
+		data: filteredGroups,
+		isLoading,
+		error,
+	} = useQuery({
+		queryKey: ['groups', {searchValue}],
+		queryFn: () => fetchGroups(searchValue),
+		placeholderData: (previousData) => previousData,
+	});
+
+	if (isLoading) {
+		return <ActivityIndicator />;
+	}
+
+	if (error || !filteredGroups) {
+		console.log(error);
+		return <Text>Group not found</Text>;
+	}
 
 	const onGroupSelected = (group: Group) => {
 		setGroup(group);

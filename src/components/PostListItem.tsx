@@ -1,4 +1,4 @@
-import type {Post} from '@/types/types';
+import type {Tables} from '@/types/database.types';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import {formatDistanceToNowStrict} from 'date-fns';
 import {Link} from 'expo-router';
@@ -10,6 +10,11 @@ import {
 	Text,
 	View,
 } from 'react-native';
+
+type Post = Tables<'posts'> & {
+	user: Tables<'users'>;
+	group: Tables<'groups'>;
+};
 
 type PostListItemProps = {
 	post: Post;
@@ -24,9 +29,11 @@ export default function PostListItem({
 	const shouldShowDescription = isDetailedPost || !post.image;
 
 	return (
-		<Link href={`/post/${post.id}`}>
-			<ScrollView>
-				<View
+		<ScrollView>
+			<Link
+				href={`/post/${post.id}`}
+				asChild>
+				<Pressable
 					style={{
 						paddingHorizontal: 15,
 						paddingVertical: 10,
@@ -38,27 +45,33 @@ export default function PostListItem({
 					{/* HEADER */}
 					<View style={{flexDirection: 'row', alignItems: 'center'}}>
 						<Image
-							source={{uri: post.group.image}}
-							style={{width: 20, height: 20, borderRadius: 10, marginRight: 5}}
+							source={{uri: post.group.image!}}
+							style={{width: 30, height: 30, borderRadius: 40, marginRight: 5}}
 						/>
 						<View>
 							<View style={{flexDirection: 'row', gap: 5}}>
-								<Text
-									style={{fontWeight: 'bold', fontSize: 13, color: '#3A3B3C'}}>
-									{post.group.name}
-								</Text>
-								<Text
-									style={{
-										color: 'grey',
-										fontSize: 13,
-										alignSelf: 'flex-start',
-									}}>
-									{formatDistanceToNowStrict(new Date(post.created_at))}
-								</Text>
+								<View style={{flexDirection: 'column'}}>
+									<Text
+										style={{
+											fontWeight: 'bold',
+											fontSize: 13,
+											color: '#3A3B3C',
+										}}>
+										{post.group.name}
+									</Text>
+									<Text
+										style={{
+											color: 'grey',
+											fontSize: 13,
+											alignSelf: 'flex-start',
+										}}>
+										{formatDistanceToNowStrict(new Date(post.created_at!))}
+									</Text>
+								</View>
 							</View>
 							{isDetailedPost && (
 								<Text style={{fontSize: 13, color: '#2E5DAA'}}>
-									{post.user.name}
+									{post.user?.name}
 								</Text>
 							)}
 						</View>
@@ -72,8 +85,8 @@ export default function PostListItem({
 							<Text
 								style={{
 									color: 'white',
-									paddingVertical: 2,
-									paddingHorizontal: 7,
+									paddingVertical: 4,
+									paddingHorizontal: 9,
 									fontWeight: 'bold',
 									fontSize: 13,
 								}}>
@@ -108,14 +121,14 @@ export default function PostListItem({
 									size={19}
 									color='black'
 								/>
-								<Text
+								{/* <Text
 									style={{
 										fontWeight: '500',
 										marginLeft: 5,
 										alignSelf: 'center',
 									}}>
 									{post.upvotes}
-								</Text>
+								</Text> */}
 								<View
 									style={{
 										width: 1,
@@ -137,14 +150,14 @@ export default function PostListItem({
 									size={19}
 									color='black'
 								/>
-								<Text
+								{/* <Text
 									style={{
 										fontWeight: '500',
 										marginLeft: 5,
 										alignSelf: 'center',
 									}}>
 									{post.nr_of_comments}
-								</Text>
+								</Text> */}
 							</View>
 						</View>
 						<View style={{marginLeft: 'auto', flexDirection: 'row', gap: 10}}>
@@ -162,9 +175,9 @@ export default function PostListItem({
 							/>
 						</View>
 					</View>
-				</View>
-			</ScrollView>
-		</Link>
+				</Pressable>
+			</Link>
+		</ScrollView>
 	);
 }
 

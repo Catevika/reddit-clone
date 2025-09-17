@@ -1,10 +1,12 @@
 import comments from '@/assets/data/comments.json';
-import posts from '@/assets/data/posts.json';
 import CommentListItem from '@/src/components/CommentListItem';
 import PostListItem from '@/src/components/PostListItem';
+import {fetchPostById} from '@/src/services/postService';
+import {useQuery} from '@tanstack/react-query';
 import {useLocalSearchParams} from 'expo-router';
 import {useCallback, useRef, useState} from 'react';
 import {
+	ActivityIndicator,
 	FlatList,
 	KeyboardAvoidingView,
 	Platform,
@@ -15,22 +17,39 @@ import {
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-export default function PostDetailed() {
-	const {id} = useLocalSearchParams();
+export default function DetailedPost() {
+	const {id} = useLocalSearchParams<{id: string}>();
+
 	const insets = useSafeAreaInsets();
 
 	const [comment, setComment] = useState<string>('');
 	const [isInputFocused, setIsInputFocused] = useState<boolean>(false);
 	const inputRef = useRef<TextInput | null>(null);
 
-	const detailedPost = posts.find((post) => post.id === id);
+	const {
+		data: detailedPost,
+		isLoading,
+		error,
+	} = useQuery({
+		queryKey: ['posts', id],
+		queryFn: async () => {
+			const result = await fetchPostById(id);
+			return result;
+		},
+	});
+
+	if (isLoading) {
+		return <ActivityIndicator />;
+	}
+
+	if (error || !detailedPost) {
+		return <Text>Post not found</Text>;
+	}
+
+	// const detailedPost = posts.find((post) => post.id === id);
 	const postComments = comments.filter(
 		(comment) => comment.post_id === detailedPost?.id,
 	);
-
-	if (!detailedPost) {
-		return <Text>Post Not Found!</Text>;
-	}
 
 	// useCallback with memo inside CommentListItem prevents re-renders when replying to a comment
 	const handleReplyPress = useCallback((commentId: string) => {

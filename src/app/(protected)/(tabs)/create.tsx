@@ -1,9 +1,13 @@
 import {selectedGroupAtom} from '@/src/atoms';
+import {insertPost} from '@/src/services/postService';
+import {useUser} from '@clerk/clerk-expo';
 import {AntDesign} from '@expo/vector-icons';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {Link, router} from 'expo-router';
 import {useAtom} from 'jotai';
 import {useState} from 'react';
 import {
+	Alert,
 	Image,
 	KeyboardAvoidingView,
 	Platform,
@@ -17,9 +21,14 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 export default function CreateScreen() {
+	const {user} = useUser();
+
 	const [title, setTitle] = useState<string>('');
 	const [bodyText, setBodyText] = useState<string>('');
+
 	const [group, setGroup] = useAtom(selectedGroupAtom);
+
+	const queryClient = useQueryClient();
 
 	const goBack = () => {
 		setTitle('');
@@ -27,6 +36,34 @@ export default function CreateScreen() {
 		setGroup(null);
 		router.back();
 	};
+
+	const {mutate: createPost, isPending} = useMutation({
+		mutationFn: () => {
+			if (!group) {
+				throw new Error('Please select a community');
+			}
+
+			if (!title) {
+				throw new Error('Please enter a title');
+			}
+
+			return insertPost({
+				title,
+				description: bodyText,
+				group_id: group.id,
+				user_id: user?.id,
+			});
+		},
+		onSuccess: (data) => {
+			console.log(data);
+			queryClient.invalidateQueries({queryKey: ['posts']});
+			goBack();
+		},
+		onError: (error) => {
+			console.log(error);
+			Alert.alert('Failed to create new Post', error.message);
+		},
+	});
 
 	return (
 		<SafeAreaView
@@ -40,9 +77,12 @@ export default function CreateScreen() {
 					onPress={() => goBack()}
 				/>
 				<Pressable
-					onPress={() => console.error('Pressed')}
+					onPress={() => createPost()}
+					disabled={isPending}
 					style={{marginLeft: 'auto'}}>
-					<Text style={styles.postText}>Post</Text>
+					<Text style={styles.postText}>
+						{isPending ? 'Posting...' : 'Post'}
+					</Text>
 				</Pressable>
 			</View>
 			{/* COMMUNITY SELECTOR */}
