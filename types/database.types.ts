@@ -61,16 +61,19 @@ export type Database = {
           id: string
           image: string | null
           name: string
+          user_id: string | null
         }
         Insert: {
           id?: string
           image?: string | null
           name: string
+          user_id?: string | null
         }
         Update: {
           id?: string
           image?: string | null
           name?: string
+          user_id?: string | null
         }
         Relationships: []
       }

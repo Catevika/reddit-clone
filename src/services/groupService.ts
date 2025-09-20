@@ -1,5 +1,7 @@
 import {supabase} from '@/src/lib/supabase';
-import type {Group} from '@/types/types';
+import type {Tables} from '@/types/database.types';
+
+type Group = Tables<'groups'>;
 
 export const fetchGroups = async (search: string): Promise<Group[]> => {
 	const {data, error} = await supabase

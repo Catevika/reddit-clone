@@ -94,7 +94,7 @@ export default function CreateScreen() {
 						href={'/groupSelector'}
 						asChild>
 						<Pressable style={styles.communityContainer}>
-							{group ? (
+							{group && group.image ? (
 								<>
 									<Image
 										source={{uri: group.image}}

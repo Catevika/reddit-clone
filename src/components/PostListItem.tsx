@@ -44,10 +44,17 @@ export default function PostListItem({
 					}}>
 					{/* HEADER */}
 					<View style={{flexDirection: 'row', alignItems: 'center'}}>
-						<Image
-							source={{uri: post.group.image!}}
-							style={{width: 30, height: 30, borderRadius: 40, marginRight: 5}}
-						/>
+						{post.group && post.group.image ? (
+							<Image
+								source={{uri: post.group.image}}
+								style={{
+									width: 30,
+									height: 30,
+									borderRadius: 40,
+									marginRight: 5,
+								}}
+							/>
+						) : null}
 						<View>
 							<View style={{flexDirection: 'row', gap: 5}}>
 								<View style={{flexDirection: 'column'}}>

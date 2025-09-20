@@ -11,7 +11,7 @@ type InsertPost = TablesInsert<'posts'>;
 export const fetchPosts = async (): Promise<Post[]> => {
 	const {data, error} = await supabase
 		.from('posts')
-		.select('*, group: groups(*)')
+		.select('*, group:groups(*)')
 		.order('created_at', {ascending: false});
 	if (error) {
 		throw error;
@@ -23,7 +23,7 @@ export const fetchPosts = async (): Promise<Post[]> => {
 export const fetchPostById = async (id: string): Promise<Post> => {
 	const {data, error} = await supabase
 		.from('posts')
-		.select('*, group: groups(*)')
+		.select('*, group:groups(*)')
 		.eq('id', id)
 		.single();
 

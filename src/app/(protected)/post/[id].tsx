@@ -26,6 +26,12 @@ export default function DetailedPost() {
 	const [isInputFocused, setIsInputFocused] = useState<boolean>(false);
 	const inputRef = useRef<TextInput | null>(null);
 
+	// useCallback with memo inside CommentListItem prevents re-renders when replying to a comment - must be before any other hook
+	const handleReplyPress = useCallback((commentId: string) => {
+		console.log(commentId);
+		inputRef.current?.focus();
+	}, []);
+
 	const {
 		data: detailedPost,
 		isLoading,
@@ -46,16 +52,9 @@ export default function DetailedPost() {
 		return <Text>Post not found</Text>;
 	}
 
-	// const detailedPost = posts.find((post) => post.id === id);
 	const postComments = comments.filter(
 		(comment) => comment.post_id === detailedPost?.id,
 	);
-
-	// useCallback with memo inside CommentListItem prevents re-renders when replying to a comment
-	const handleReplyPress = useCallback((commentId: string) => {
-		console.log(commentId);
-		inputRef.current?.focus();
-	}, []);
 
 	return (
 		<KeyboardAvoidingView

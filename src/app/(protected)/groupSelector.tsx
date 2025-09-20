@@ -6,7 +6,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import {useQuery} from '@tanstack/react-query';
 import {router} from 'expo-router';
 import {useSetAtom} from 'jotai';
-import React, {useState} from 'react';
+import {useState} from 'react';
 import {
 	ActivityIndicator,
 	FlatList,
@@ -120,10 +120,12 @@ export default function GroupSelector() {
 								marginBottom: 20,
 							}}
 							onPress={() => onGroupSelected(item)}>
-							<Image
-								source={{uri: item.image}}
-								style={{width: 40, aspectRatio: 1, borderRadius: 20}}
-							/>
+							{item && item.image && (
+								<Image
+									source={{uri: item.image}}
+									style={{width: 40, aspectRatio: 1, borderRadius: 20}}
+								/>
+							)}
 							<View>
 								<Text style={{fontWeight: '600'}}>{item.name}</Text>
 								<Text style={{color: 'grey'}}>recently visited</Text>
