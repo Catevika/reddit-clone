@@ -30,17 +30,30 @@ const CommentListItem = ({
 			}}>
 			{/* User Info */}
 			<View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
-				<Image
-					source={{
-						uri:
-							comment.user.image ||
-							'https://notjustdev-dummy.s3.us-east-2.amazonaws.com/avatars/3.jpg',
-					}}
-					style={{width: 28, height: 28, borderRadius: 15, marginRight: 4}}
-				/>
-				<Text style={{fontWeight: '600', color: '#737373', fontSize: 13}}>
-					{comment.user.name}
-				</Text>
+				{comment && comment.user ? (
+					<>
+						{comment.user.image && (
+							<Image
+								source={{
+									uri:
+										comment.user.image ||
+										'https://notjustdev-dummy.s3.us-east-2.amazonaws.com/avatars/3.jpg',
+								}}
+								style={{
+									width: 28,
+									height: 28,
+									borderRadius: 15,
+									marginRight: 4,
+								}}
+							/>
+						)}
+						{comment.user.name ? (
+							<Text style={{fontWeight: '600', color: '#737373', fontSize: 13}}>
+								{comment.user.name || 'User'}
+							</Text>
+						) : null}
+					</>
+				) : null}
 				<Text style={{color: '#737373', fontSize: 13}}>&#x2022;</Text>
 				<Text style={{color: '#737373', fontSize: 13}}>
 					{formatDistanceToNowStrict(new Date(comment.created_at))}
@@ -92,26 +105,29 @@ const CommentListItem = ({
 			</View>
 
 			{/* Show Replies Button */}
-			{comment.replies.length > 0 && depth < 5 && !showReplies && (
-				<Pressable
-					onPress={() => setShowReplies(true)}
-					style={{
-						backgroundColor: '#EDEDED',
-						borderRadius: 3,
-						paddingVertical: 3,
-						alignItems: 'center',
-					}}>
-					<Text
+			{comment.replies &&
+				comment.replies.length > 0 &&
+				depth < 5 &&
+				!showReplies && (
+					<Pressable
+						onPress={() => setShowReplies(true)}
 						style={{
-							fontSize: 12,
-							letterSpacing: 0.5,
-							fontWeight: '500',
-							color: '#545454',
+							backgroundColor: '#EDEDED',
+							borderRadius: 3,
+							paddingVertical: 3,
+							alignItems: 'center',
 						}}>
-						Show Replies
-					</Text>
-				</Pressable>
-			)}
+						<Text
+							style={{
+								fontSize: 12,
+								letterSpacing: 0.5,
+								fontWeight: '500',
+								color: '#545454',
+							}}>
+							Show Replies
+						</Text>
+					</Pressable>
+				)}
 
 			{/* Nested Replies */}
 			{showReplies && (

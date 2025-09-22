@@ -1,13 +1,15 @@
-import comments from '@/assets/data/comments.json';
-import {fetchPostById} from '@/services/postService';
+import {fetchComments} from '@/services/commentServices';
+import {deletePostById, fetchPostById} from '@/services/postService';
 import CommentListItem from '@/src/app/components/CommentListItem';
 import PostListItem from '@/src/app/components/PostListItem';
-import {useAuth} from '@clerk/clerk-expo';
-import {useQuery} from '@tanstack/react-query';
-import {useLocalSearchParams} from 'expo-router';
+import {useAuth, useUser} from '@clerk/clerk-expo';
+import {Feather} from '@expo/vector-icons';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import {router, Stack, useLocalSearchParams} from 'expo-router';
 import {useCallback, useRef, useState} from 'react';
 import {
 	ActivityIndicator,
+	Alert,
 	FlatList,
 	KeyboardAvoidingView,
 	Platform,
@@ -21,13 +23,20 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 export default function DetailedPost() {
 	const {getToken} = useAuth();
 
+	const {user, isLoaded} = useUser();
+	if (!isLoaded) return <ActivityIndicator />;
+
 	const {id} = useLocalSearchParams<{id: string}>();
+
+	const queryClient = useQueryClient();
 
 	const insets = useSafeAreaInsets();
 
 	const [comment, setComment] = useState<string>('');
 	const [isInputFocused, setIsInputFocused] = useState<boolean>(false);
 	const inputRef = useRef<TextInput | null>(null);
+
+	const [showReplies, setShowReplies] = useState<boolean>(false);
 
 	// useCallback with memo inside CommentListItem prevents re-renders when replying to a comment - must be before any other hook
 	const handleReplyPress = useCallback((commentId: string) => {
@@ -49,12 +58,52 @@ export default function DetailedPost() {
 		},
 	});
 
-	if (isLoading) {
+	const isOwner = user?.id.includes(detailedPost?.user_id || '');
+
+	const {
+		data: comments,
+		isLoading: commentsLoading,
+		error: commentsError,
+	} = useQuery({
+		queryKey: ['comments'],
+		queryFn: async () => {
+			const token = await getToken();
+			if (!token) throw new Error('No token found');
+			return fetchComments(token);
+		},
+	});
+
+	const {mutate: removePost} = useMutation({
+		mutationFn: async () => {
+			const token = await getToken();
+			if (!token) throw new Error('No token found');
+			return deletePostById(token, id);
+		},
+		onSuccess: () => {
+			console.log('Post deleted');
+			queryClient.invalidateQueries({queryKey: ['posts']});
+			router.back();
+		},
+		onError: (error) => {
+			console.log(error);
+			Alert.alert('Failed to delete Post', error.message);
+		},
+	});
+
+	if (isLoading || commentsLoading) {
 		return <ActivityIndicator />;
 	}
 
 	if (error || !detailedPost) {
 		return <Text>Post not found</Text>;
+	}
+
+	if (!comments) {
+		return <Text>Be the 1st to write a comment</Text>;
+	}
+
+	if (commentsError) {
+		return <Text>Error loading comments</Text>;
 	}
 
 	const postComments = comments.filter(
@@ -68,10 +117,28 @@ export default function DetailedPost() {
 			keyboardVerticalOffset={insets.top + 10}>
 			<FlatList
 				ListHeaderComponent={
-					<PostListItem
-						post={detailedPost}
-						isDetailedPost
-					/>
+					<View>
+						<Stack.Screen
+							options={{
+								headerRight: () => (
+									<View style={{flexDirection: 'row', gap: 10}}>
+										{isOwner && (
+											<Feather
+												name='trash-2'
+												size={24}
+												color='white'
+												onPress={() => removePost()}
+											/>
+										)}
+									</View>
+								),
+							}}
+						/>
+						<PostListItem
+							post={detailedPost}
+							isDetailedPost
+						/>
+					</View>
 				}
 				data={postComments}
 				keyExtractor={(item) => item.id}

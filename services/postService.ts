@@ -51,3 +51,11 @@ export const insertPost = async (
 	if (error || !data) throw error;
 	return data;
 };
+
+export const deletePostById = async (token: string | null, id: string) => {
+	const supabase = createSupabaseClientWithToken(token);
+
+	const {data, error} = await supabase.from('posts').delete().eq('id', id);
+	if (error) throw error;
+	return data;
+};
