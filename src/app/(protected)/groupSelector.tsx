@@ -1,6 +1,7 @@
+import {fetchGroups} from '@/services/groupService';
 import {selectedGroupAtom} from '@/src/atoms';
-import {fetchGroups} from '@/src/services/groupService';
 import type {Tables} from '@/types/database.types';
+import {useAuth} from '@clerk/clerk-expo';
 import {Feather, Ionicons} from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import {useQuery} from '@tanstack/react-query';
@@ -23,6 +24,8 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 type Group = Tables<'groups'>;
 
 export default function GroupSelector() {
+	const {getToken} = useAuth();
+
 	const [searchValue, setSearchValue] = useState<string>('');
 	const setGroup = useSetAtom(selectedGroupAtom);
 
@@ -32,7 +35,11 @@ export default function GroupSelector() {
 		error,
 	} = useQuery({
 		queryKey: ['groups', {searchValue}],
-		queryFn: () => fetchGroups(searchValue),
+		queryFn: async () => {
+			const token = await getToken();
+			if (!token) throw new Error('No token found');
+			return fetchGroups(token, searchValue);
+		},
 		placeholderData: (previousData) => previousData,
 	});
 

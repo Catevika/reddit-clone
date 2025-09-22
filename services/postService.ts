@@ -1,0 +1,53 @@
+import {createSupabaseClientWithToken} from '@/lib/supabase';
+import type {Tables, TablesInsert} from '@/types/database.types';
+
+type Post = Tables<'posts'> & {
+	user: Tables<'users'>;
+	group: Tables<'groups'>;
+};
+
+type InsertPost = TablesInsert<'posts'>;
+
+export const fetchPosts = async (token: string | null) => {
+	const supabase = createSupabaseClientWithToken(token);
+
+	const {data, error} = await supabase
+		.from('posts')
+		.select('*, group:groups(*)')
+		.order('created_at', {ascending: false});
+
+	if (error) throw error;
+	return data;
+};
+
+export const fetchPostById = async (
+	token: string | null,
+	id: string,
+): Promise<Post> => {
+	const supabase = createSupabaseClientWithToken(token);
+
+	const {data, error} = await supabase
+		.from('posts')
+		.select('*, group:groups(*)')
+		.eq('id', id)
+		.single();
+
+	if (!data || error) throw error;
+	return data;
+};
+
+export const insertPost = async (
+	token: string | null,
+	post: InsertPost,
+): Promise<InsertPost> => {
+	const supabase = createSupabaseClientWithToken(token);
+
+	const {data, error} = await supabase
+		.from('posts')
+		.insert(post)
+		.select()
+		.single();
+
+	if (error || !data) throw error;
+	return data;
+};

@@ -1,6 +1,6 @@
+import {insertPost} from '@/services/postService';
 import {selectedGroupAtom} from '@/src/atoms';
-import {insertPost} from '@/src/services/postService';
-import {useUser} from '@clerk/clerk-expo';
+import {useAuth, useUser} from '@clerk/clerk-expo';
 import {AntDesign} from '@expo/vector-icons';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {Link, router} from 'expo-router';
@@ -21,6 +21,8 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 export default function CreateScreen() {
+	const {getToken} = useAuth();
+
 	const {user} = useUser();
 
 	const [title, setTitle] = useState<string>('');
@@ -38,7 +40,10 @@ export default function CreateScreen() {
 	};
 
 	const {mutate: createPost, isPending} = useMutation({
-		mutationFn: () => {
+		mutationFn: async () => {
+			const token = await getToken();
+			if (!token) throw new Error('No token found');
+
 			if (!group) {
 				throw new Error('Please select a community');
 			}
@@ -47,12 +52,13 @@ export default function CreateScreen() {
 				throw new Error('Please enter a title');
 			}
 
-			return insertPost({
+			const result = await insertPost(token, {
 				title,
 				description: bodyText,
 				group_id: group.id,
 				user_id: user?.id,
 			});
+			return result;
 		},
 		onSuccess: (data) => {
 			console.log(data);

@@ -3,7 +3,7 @@ import {Feather} from '@expo/vector-icons';
 import {useRouter} from 'expo-router';
 import {TouchableOpacity} from 'react-native';
 
-export const SignOutButton = () => {
+export default function SignOutButton() {
 	// Use `useClerk()` to access the `signOut()` function
 	const {signOut} = useClerk();
 	const router = useRouter();
@@ -30,4 +30,4 @@ export const SignOutButton = () => {
 			/>
 		</TouchableOpacity>
 	);
-};
+}

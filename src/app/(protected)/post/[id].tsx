@@ -1,7 +1,8 @@
 import comments from '@/assets/data/comments.json';
-import CommentListItem from '@/src/components/CommentListItem';
-import PostListItem from '@/src/components/PostListItem';
-import {fetchPostById} from '@/src/services/postService';
+import {fetchPostById} from '@/services/postService';
+import CommentListItem from '@/src/app/components/CommentListItem';
+import PostListItem from '@/src/app/components/PostListItem';
+import {useAuth} from '@clerk/clerk-expo';
 import {useQuery} from '@tanstack/react-query';
 import {useLocalSearchParams} from 'expo-router';
 import {useCallback, useRef, useState} from 'react';
@@ -18,6 +19,8 @@ import {
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export default function DetailedPost() {
+	const {getToken} = useAuth();
+
 	const {id} = useLocalSearchParams<{id: string}>();
 
 	const insets = useSafeAreaInsets();
@@ -39,7 +42,9 @@ export default function DetailedPost() {
 	} = useQuery({
 		queryKey: ['posts', id],
 		queryFn: async () => {
-			const result = await fetchPostById(id);
+			const token = await getToken();
+			if (!token) throw new Error('No token found');
+			const result = await fetchPostById(token, id);
 			return result;
 		},
 	});

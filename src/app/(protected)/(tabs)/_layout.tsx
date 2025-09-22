@@ -1,4 +1,4 @@
-import {SignOutButton} from '@/src/components/SignOutButton';
+import SignOutButton from '@/src/app/components/SignOutButton';
 import {AntDesign, Feather, Ionicons} from '@expo/vector-icons';
 import {Tabs} from 'expo-router';
 
