@@ -1,8 +1,12 @@
+import {fetchPostUpvotes} from '@/services/postService';
 import type {Tables} from '@/types/database.types';
+import {useAuth} from '@clerk/clerk-expo';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import {useQuery} from '@tanstack/react-query';
 import {formatDistanceToNowStrict} from 'date-fns';
 import {Link} from 'expo-router';
 import {
+	ActivityIndicator,
 	Image,
 	Pressable,
 	ScrollView,
@@ -14,6 +18,7 @@ import {
 type Post = Tables<'posts'> & {
 	user: Tables<'users'>;
 	group: Tables<'groups'>;
+	upvotes: {sum: number | null}[];
 };
 
 type PostListItemProps = {
@@ -25,8 +30,28 @@ export default function PostListItem({
 	post,
 	isDetailedPost,
 }: PostListItemProps) {
+	const {getToken} = useAuth();
+
 	const shouldShowImage = isDetailedPost || post.image;
 	const shouldShowDescription = isDetailedPost || !post.image;
+
+	const {data, isLoading, error} = useQuery({
+		queryKey: ['posts', 'upvotes', post.id],
+		queryFn: async () => {
+			const token = await getToken();
+			if (!token) throw new Error('No token found');
+			return fetchPostUpvotes(token, post.id);
+		},
+	});
+
+	if (isLoading) {
+		return <ActivityIndicator />;
+	}
+
+	if (error) {
+		console.log(error);
+		return <Text>Error fetching upvotes</Text>;
+	}
 
 	return (
 		<ScrollView>
@@ -128,14 +153,14 @@ export default function PostListItem({
 									size={19}
 									color='black'
 								/>
-								{/* <Text
+								<Text
 									style={{
 										fontWeight: '500',
 										marginLeft: 5,
 										alignSelf: 'center',
 									}}>
-									{post.upvotes}
-								</Text> */}
+									{(data && data[0].sum) || 0}
+								</Text>
 								<View
 									style={{
 										width: 1,

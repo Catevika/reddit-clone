@@ -120,18 +120,29 @@ export type Database = {
           created_at: string | null
           post_id: string
           user_id: string | null
+          value: number | null
         }
         Insert: {
           created_at?: string | null
           post_id: string
           user_id?: string | null
+          value?: number | null
         }
         Update: {
           created_at?: string | null
           post_id?: string
           user_id?: string | null
+          value?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "upvotes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       users: {
         Row: {
