@@ -36,8 +36,6 @@ export default function DetailedPost() {
 	const [isInputFocused, setIsInputFocused] = useState<boolean>(false);
 	const inputRef = useRef<TextInput | null>(null);
 
-	const [showReplies, setShowReplies] = useState<boolean>(false);
-
 	// useCallback with memo inside CommentListItem prevents re-renders when replying to a comment - must be before any other hook
 	const handleReplyPress = useCallback((commentId: string) => {
 		console.log(commentId);
@@ -60,16 +58,13 @@ export default function DetailedPost() {
 
 	const isOwner = user.id === detailedPost?.user_id || '';
 
-	const {
-		data: comments,
-		isLoading: commentsLoading,
-		error: commentsError,
-	} = useQuery({
-		queryKey: ['comments'],
+	const {data: comments} = useQuery({
+		queryKey: ['comments', {post_id: id}],
 		queryFn: async () => {
 			const token = await getToken();
 			if (!token) throw new Error('No token found');
-			return fetchComments(token);
+
+			return fetchComments(id, token);
 		},
 	});
 
@@ -90,25 +85,13 @@ export default function DetailedPost() {
 		},
 	});
 
-	if (isLoading || commentsLoading) {
+	if (isLoading) {
 		return <ActivityIndicator />;
 	}
 
 	if (error || !detailedPost) {
 		return <Text>Post not found</Text>;
 	}
-
-	if (!comments) {
-		return <Text>Be the 1st to write a comment</Text>;
-	}
-
-	if (commentsError) {
-		return <Text>Error loading comments</Text>;
-	}
-
-	const postComments = comments.filter(
-		(comment) => comment.post_id === detailedPost?.id,
-	);
 
 	return (
 		<KeyboardAvoidingView
@@ -140,7 +123,7 @@ export default function DetailedPost() {
 						/>
 					</View>
 				}
-				data={postComments}
+				data={comments}
 				keyExtractor={(item) => item.id}
 				renderItem={({item}) => (
 					<CommentListItem

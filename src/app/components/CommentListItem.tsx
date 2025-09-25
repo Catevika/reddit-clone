@@ -1,8 +1,9 @@
-import type {Comment} from '@/types/types';
+import {fetchCommentReplies, type Comment} from '@/services/commentServices';
+import {useAuth} from '@clerk/clerk-expo';
 import {Entypo, MaterialCommunityIcons, Octicons} from '@expo/vector-icons';
-import {formatDistanceToNowStrict} from 'date-fns';
+import {useQuery} from '@tanstack/react-query';
 import {memo, useState} from 'react';
-import {FlatList, Image, Pressable, Text, View} from 'react-native';
+import {FlatList, Pressable, Text, View} from 'react-native';
 
 type CommentListItemProps = {
 	comment: Comment;
@@ -15,7 +16,19 @@ const CommentListItem = ({
 	depth,
 	handleReplyPress,
 }: CommentListItemProps) => {
+	const {getToken} = useAuth();
+
 	const [showReplies, setShowReplies] = useState(false);
+
+	const {data: replies} = useQuery({
+		queryKey: ['comments', {parent_id: comment.id}],
+		queryFn: async () => {
+			const token = await getToken();
+			if (!token) throw new Error('No token found');
+
+			return fetchCommentReplies(comment.id, token);
+		},
+	});
 
 	return (
 		<View
@@ -29,7 +42,7 @@ const CommentListItem = ({
 				borderLeftColor: '#E5E7EB',
 			}}>
 			{/* User Info */}
-			<View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
+			{/* <View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
 				{comment && comment.user ? (
 					<>
 						{comment.user.image && (
@@ -56,9 +69,10 @@ const CommentListItem = ({
 				) : null}
 				<Text style={{color: '#737373', fontSize: 13}}>&#x2022;</Text>
 				<Text style={{color: '#737373', fontSize: 13}}>
-					{formatDistanceToNowStrict(new Date(comment.created_at))}
+					{comment.created_at &&
+						formatDistanceToNowStrict(new Date(comment.created_at.toString()))}
 				</Text>
-			</View>
+			</View> */}
 
 			{/* Comment Content */}
 			<Text>{comment.comment}</Text>
@@ -105,34 +119,31 @@ const CommentListItem = ({
 			</View>
 
 			{/* Show Replies Button */}
-			{comment.replies &&
-				comment.replies.length > 0 &&
-				depth < 5 &&
-				!showReplies && (
-					<Pressable
-						onPress={() => setShowReplies(true)}
+			{replies && replies.length > 0 && !showReplies && (
+				<Pressable
+					onPress={() => setShowReplies(true)}
+					style={{
+						backgroundColor: '#EDEDED',
+						borderRadius: 3,
+						paddingVertical: 3,
+						alignItems: 'center',
+					}}>
+					<Text
 						style={{
-							backgroundColor: '#EDEDED',
-							borderRadius: 3,
-							paddingVertical: 3,
-							alignItems: 'center',
+							fontSize: 12,
+							letterSpacing: 0.5,
+							fontWeight: '500',
+							color: '#545454',
 						}}>
-						<Text
-							style={{
-								fontSize: 12,
-								letterSpacing: 0.5,
-								fontWeight: '500',
-								color: '#545454',
-							}}>
-							Show Replies
-						</Text>
-					</Pressable>
-				)}
+						Show Replies
+					</Text>
+				</Pressable>
+			)}
 
 			{/* Nested Replies */}
 			{showReplies && (
 				<FlatList
-					data={comment.replies}
+					data={replies}
 					keyExtractor={(reply) => reply.id}
 					renderItem={({item}) => (
 						<CommentListItem

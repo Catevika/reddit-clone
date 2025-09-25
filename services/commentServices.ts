@@ -1,37 +1,45 @@
 import {createSupabaseClientWithToken} from '@/lib/supabase';
-import type {Tables, TablesInsert} from '@/types/database.types';
+import type {Tables} from '@/types/database.types';
 
-type Comment = Tables<'comments'> & {
-	user: Tables<'users'>;
+export type Comment = Tables<'comments'> & {
 	posts: Tables<'posts'>;
+	replies: Comment[];
+	user: Tables<'users'>;
+	upvotes: number;
 };
 
-type InsertComment = TablesInsert<'comments'>;
-
-export const fetchComments = async (token: string | null) => {
+export const fetchComments = async (
+	post_id: string,
+	token: string | null,
+): Promise<Comment[]> => {
 	const supabase = createSupabaseClientWithToken(token);
 
-	const {data, error} = await supabase.from('comments').select('*');
+	const {data, error} = await supabase
+		.from('comments')
+		.select('*, replies:comments(*)')
+		.eq('post_id', post_id)
+		.is('parent_id', null);
 
-	if (error) throw error;
+	if (!data || error) throw error;
+
 	return data;
 };
 
-// export const fetchCommentById = async (
-// 	token: string | null,
-// 	id: string,
-// ): Promise<Comment> => {
-// 	const supabase = createSupabaseClientWithToken(token);
+export const fetchCommentReplies = async (
+	parent_id: string,
+	token: string | null,
+): Promise<Comment[]> => {
+	const supabase = createSupabaseClientWithToken(token);
 
-// 	const {data, error} = await supabase
-// 		.from('comments')
-// 		.select('*')
-// 		.eq('id', id)
-// 		.single();
+	const {data, error} = await supabase
+		.from('comments')
+		.select('*, replies:comments(*)')
+		.eq('parent_id', parent_id);
 
-// 	if (!data || error) throw error;
-// 	return data;
-// };
+	if (!data || error) throw error;
+
+	return data;
+};
 
 // export const insertComment = async (
 // 	token: string | null,
