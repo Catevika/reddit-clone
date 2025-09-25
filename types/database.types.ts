@@ -118,18 +118,21 @@ export type Database = {
       upvotes: {
         Row: {
           created_at: string | null
+          id: string
           post_id: string
           user_id: string | null
           value: number | null
         }
         Insert: {
           created_at?: string | null
+          id?: string
           post_id: string
           user_id?: string | null
           value?: number | null
         }
         Update: {
           created_at?: string | null
+          id?: string
           post_id?: string
           user_id?: string | null
           value?: number | null

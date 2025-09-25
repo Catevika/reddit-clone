@@ -24,6 +24,7 @@ export default function CreateScreen() {
 	const {getToken} = useAuth();
 
 	const {user} = useUser();
+	if (!user) throw new Error('User not found');
 
 	const [title, setTitle] = useState<string>('');
 	const [bodyText, setBodyText] = useState<string>('');
@@ -56,7 +57,7 @@ export default function CreateScreen() {
 				title,
 				description: bodyText,
 				group_id: group.id,
-				user_id: user?.id,
+				user_id: user.id,
 			});
 			return result;
 		},

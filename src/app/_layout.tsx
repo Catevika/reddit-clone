@@ -11,7 +11,9 @@ export default function _RootLayout() {
 
 	return (
 		<QueryClientProvider client={queryClient}>
-			<ClerkProvider tokenCache={tokenCache}>
+			<ClerkProvider
+				tokenCache={tokenCache}
+				telemetry={false}>
 				<Slot />
 			</ClerkProvider>
 		</QueryClientProvider>

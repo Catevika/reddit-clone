@@ -1,14 +1,11 @@
 import {createSupabaseClientWithToken} from '@/lib/supabase';
 import type {Tables, TablesInsert} from '@/types/database.types';
 
-// TODO - Fix the upvotes sum that is displayed for all posts after each postId is opened
-// The problem is that the queryKey is the same for all posts, so the cache is shared
-// Solution: use a different queryKey for each post, e.g. ['posts', 'upvotes', post.id]
-
 type Post = Tables<'posts'> & {
 	user: Tables<'users'>;
 	group: Tables<'groups'>;
-	upvotes: {sum: number | null}[];
+	totalUpvotes: {sum: number}[];
+	upvote: Tables<'upvotes'>;
 };
 
 type InsertPost = TablesInsert<'posts'>;
@@ -67,14 +64,14 @@ export const deletePostById = async (token: string | null, id: string) => {
 
 export const fetchPostUpvotes = async (
 	token: string | null,
-	postId: string,
+	post_id: string,
 ) => {
 	const supabase = createSupabaseClientWithToken(token);
 
 	const {data, error} = await supabase
 		.from('upvotes')
-		.select('value.sum()')
-		.eq('post_id', postId);
+		.select('sum_value: value.sum()')
+		.eq('post_id', post_id);
 	if (error) throw error;
 	return data;
 };

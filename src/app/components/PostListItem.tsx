@@ -1,12 +1,12 @@
 import {fetchPostUpvotes} from '@/services/postService';
+import {createUpvote, selectMyVote} from '@/services/upvoteService';
 import type {Tables} from '@/types/database.types';
-import {useAuth} from '@clerk/clerk-expo';
+import {useAuth, useUser} from '@clerk/clerk-expo';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import {useQuery} from '@tanstack/react-query';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {formatDistanceToNowStrict} from 'date-fns';
 import {Link} from 'expo-router';
 import {
-	ActivityIndicator,
 	Image,
 	Pressable,
 	ScrollView,
@@ -18,7 +18,8 @@ import {
 type Post = Tables<'posts'> & {
 	user: Tables<'users'>;
 	group: Tables<'groups'>;
-	upvotes: {sum: number | null}[];
+	totalUpvotes: {sum: number}[];
+	upvote: Tables<'upvotes'>;
 };
 
 type PostListItemProps = {
@@ -30,13 +31,18 @@ export default function PostListItem({
 	post,
 	isDetailedPost,
 }: PostListItemProps) {
+	const {user} = useUser();
+	if (!user) throw new Error('User not found');
+
 	const {getToken} = useAuth();
+
+	const queryClient = useQueryClient();
 
 	const shouldShowImage = isDetailedPost || post.image;
 	const shouldShowDescription = isDetailedPost || !post.image;
 
-	const {data, isLoading, error} = useQuery({
-		queryKey: ['posts', 'upvotes', post.id],
+	const {data: totalUpvotes} = useQuery({
+		queryKey: ['posts', post.id, 'upvotes'],
 		queryFn: async () => {
 			const token = await getToken();
 			if (!token) throw new Error('No token found');
@@ -44,14 +50,33 @@ export default function PostListItem({
 		},
 	});
 
-	if (isLoading) {
-		return <ActivityIndicator />;
-	}
+	const {mutate: upvote} = useMutation({
+		mutationFn: async (value: 1 | -1) => {
+			const token = await getToken();
+			if (!token) throw new Error('No token found');
 
-	if (error) {
-		console.log(error);
-		return <Text>Error fetching upvotes</Text>;
-	}
+			if (value !== 1 && value !== -1) {
+				throw new Error('Invalid upvote value');
+			}
+
+			return createUpvote(user.id, post.id, value, token);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({queryKey: ['posts']});
+		},
+	});
+
+	const {data: myVote} = useQuery({
+		queryKey: ['posts', post.id, 'my-upvote'],
+		queryFn: async () => {
+			const token = await getToken();
+			if (!token) throw new Error('No token found');
+			return selectMyVote(user.id, post.id, token);
+		},
+	});
+
+	const isUpvoted = myVote?.value === 1;
+	const isDownvoted = myVote?.value === -1;
 
 	return (
 		<ScrollView>
@@ -149,9 +174,19 @@ export default function PostListItem({
 						<View style={{flexDirection: 'row', gap: 10}}>
 							<View style={[{flexDirection: 'row'}, styles.iconBox]}>
 								<MaterialCommunityIcons
-									name='arrow-up-bold-outline'
+									name={isUpvoted ? 'arrow-up-bold' : 'arrow-up-bold-outline'}
 									size={19}
-									color='black'
+									color={isUpvoted ? 'green' : 'black'}
+									onPress={() => upvote(1)}
+								/>
+								<View
+									style={{
+										width: 1,
+										backgroundColor: '#D4D4D4',
+										height: 14,
+										marginHorizontal: 7,
+										alignSelf: 'center',
+									}}
 								/>
 								<Text
 									style={{
@@ -159,7 +194,10 @@ export default function PostListItem({
 										marginLeft: 5,
 										alignSelf: 'center',
 									}}>
-									{(data && data[0].sum) || 0}
+									{(totalUpvotes &&
+										totalUpvotes.length > 0 &&
+										totalUpvotes[0].sum_value) ||
+										0}
 								</Text>
 								<View
 									style={{
@@ -171,9 +209,12 @@ export default function PostListItem({
 									}}
 								/>
 								<MaterialCommunityIcons
-									name='arrow-down-bold-outline'
+									name={
+										isDownvoted ? 'arrow-down-bold' : 'arrow-down-bold-outline'
+									}
 									size={19}
-									color='black'
+									color={isDownvoted ? 'crimson' : 'black'}
+									onPress={() => upvote(-1)}
 								/>
 							</View>
 							<View style={[{flexDirection: 'row'}, styles.iconBox]}>

@@ -23,8 +23,8 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 export default function DetailedPost() {
 	const {getToken} = useAuth();
 
-	const {user, isLoaded} = useUser();
-	if (!isLoaded) return <ActivityIndicator />;
+	const {user} = useUser();
+	if (!user) throw new Error('User not found');
 
 	const {id} = useLocalSearchParams<{id: string}>();
 
@@ -58,7 +58,7 @@ export default function DetailedPost() {
 		},
 	});
 
-	const isOwner = user?.id.includes(detailedPost?.user_id || '');
+	const isOwner = user.id === detailedPost?.user_id || '';
 
 	const {
 		data: comments,
