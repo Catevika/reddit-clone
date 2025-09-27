@@ -6,16 +6,23 @@ type Post = Tables<'posts'> & {
 	group: Tables<'groups'>;
 	totalUpvotes: {sum: number}[];
 	upvote: Tables<'upvotes'>;
+	nb_comments: {count: number}[] | null;
 };
 
-type InsertPost = TablesInsert<'posts'>;
+// I would like the type of nb_comments[0].count or null ?
+
+type InsertPost = TablesInsert<'posts'> & {
+	nb_comments: Tables<'comments'>[] | null;
+};
 
 export const fetchPosts = async (token: string | null) => {
 	const supabase = createSupabaseClientWithToken(token);
 
 	const {data, error} = await supabase
 		.from('posts')
-		.select('*, group:groups(*), upvotes(value.sum())')
+		.select(
+			'*, group:groups(*), upvotes(value.sum()), nb_comments:comments(count)',
+		)
 		.order('created_at', {ascending: false});
 
 	if (error) throw error;
@@ -30,7 +37,9 @@ export const fetchPostById = async (
 
 	const {data, error} = await supabase
 		.from('posts')
-		.select('*, group:groups(*), upvotes(value.sum())')
+		.select(
+			'*, group:groups(*), upvotes(value.sum()), nb_comments:comments(count)',
+		)
 		.eq('id', id)
 		.single();
 

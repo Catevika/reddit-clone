@@ -21,6 +21,7 @@ type Post = Tables<'posts'> & {
 	group: Tables<'groups'>;
 	totalUpvotes: {sum: number}[];
 	upvote: Tables<'upvotes'>;
+	nb_comments: {count: number}[];
 };
 
 type PostListItemProps = {
@@ -228,14 +229,14 @@ export default function PostListItem({
 									size={19}
 									color='black'
 								/>
-								{/* <Text
+								<Text
 									style={{
 										fontWeight: '500',
 										marginLeft: 5,
 										alignSelf: 'center',
 									}}>
-									{post.nr_of_comments}
-								</Text> */}
+									{post.nb_comments[0].count ?? 0}
+								</Text>
 							</View>
 						</View>
 						<View style={{marginLeft: 'auto', flexDirection: 'row', gap: 10}}>
