@@ -1,9 +1,13 @@
-import { fetchCommentReplies, type Comment } from '@/services/commentServices';
-import { useAuth } from '@clerk/clerk-expo';
-import { Entypo, MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
-import { memo, useState } from 'react';
-import { FlatList, Pressable, Text, View } from 'react-native';
+import {
+	deleteCommentById,
+	fetchCommentReplies,
+	type Comment,
+} from '@/services/commentServices';
+import {useAuth, useUser} from '@clerk/clerk-expo';
+import {Feather, MaterialCommunityIcons, Octicons} from '@expo/vector-icons';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import {memo, useState} from 'react';
+import {Alert, FlatList, Pressable, Text, View} from 'react-native';
 
 type CommentListItemProps = {
 	comment: Comment;
@@ -18,6 +22,11 @@ const CommentListItem = ({
 }: CommentListItemProps) => {
 	const {getToken} = useAuth();
 
+	const {user} = useUser();
+	if (!user) throw new Error('User not found');
+
+	const queryClient = useQueryClient();
+
 	const [showReplies, setShowReplies] = useState(false);
 
 	const {data: replies} = useQuery({
@@ -29,6 +38,30 @@ const CommentListItem = ({
 			return fetchCommentReplies(comment.id, token);
 		},
 	});
+
+	const isOwner = user.id === comment?.user_id || '';
+
+	const {mutate: deleteComment, isPending} = useMutation({
+		mutationFn: async () => {
+			const token = await getToken();
+			if (!token) throw new Error('No token found');
+			return deleteCommentById(token, comment.id);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ['comments', {post_id: comment.post_id}],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ['comments', {parent_id: comment.parent_id}],
+			});
+		},
+		onError: (error) => {
+			console.log(error);
+			Alert.alert('Failed to delete Comment', error.message);
+		},
+	});
+
+	if (!comment || isPending) return null;
 
 	return (
 		<View
@@ -75,9 +108,7 @@ const CommentListItem = ({
 			</View> */}
 
 			{/* Comment Content */}
-			<Text>
-				{comment.comment}
-			</Text>
+			<Text>{comment.comment}</Text>
 
 			{/* Comment Actions */}
 			<View
@@ -87,11 +118,18 @@ const CommentListItem = ({
 					alignItems: 'center',
 					gap: 14,
 				}}>
-				<Entypo
-					name='dots-three-horizontal'
-					size={15}
-					color='#737373'
-				/>
+				{isOwner ? (
+					<Feather
+						name='trash-2'
+						size={15}
+						color='#737373'
+						onPress={() => deleteComment()}
+						style={{
+							opacity: isPending ? 0.5 : 1,
+							pointerEvents: isPending ? 'none' : 'auto',
+						}}
+					/>
+				) : null}
 				<Octicons
 					name='reply'
 					size={16}

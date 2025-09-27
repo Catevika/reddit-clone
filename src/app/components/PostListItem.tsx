@@ -7,6 +7,7 @@ import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import {formatDistanceToNowStrict} from 'date-fns';
 import {Link} from 'expo-router';
 import {
+	Alert,
 	Image,
 	Pressable,
 	ScrollView,
@@ -63,6 +64,10 @@ export default function PostListItem({
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({queryKey: ['posts']});
+		},
+		onError: (error) => {
+			console.log(error);
+			Alert.alert('Failed to Upvote', error.message);
 		},
 	});
 

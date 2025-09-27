@@ -60,10 +60,10 @@ export const insertComment = async (
 	return data;
 };
 
-// export const deleteCommentById = async (token: string | null, id: string) => {
-// 	const supabase = createSupabaseClientWithToken(token);
+export const deleteCommentById = async (token: string | null, id: string) => {
+	const supabase = createSupabaseClientWithToken(token);
 
-// 	const {data, error} = await supabase.from('comments').delete().eq('id', id);
-// 	if (error) throw error;
-// 	return data;
-// };
+	const {error} = await supabase.from('comments').delete().eq('id', id);
+	if (error) throw error;
+	return true;
+};
