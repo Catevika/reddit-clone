@@ -58,10 +58,11 @@ export default function CreateScreen() {
 				description: bodyText,
 				group_id: group.id,
 				user_id: user.id,
+				nb_comments: null,
 			});
 			return result;
 		},
-		onSuccess: (data) => {
+		onSuccess: () => {
 			queryClient.invalidateQueries({queryKey: ['posts']});
 			goBack();
 		},

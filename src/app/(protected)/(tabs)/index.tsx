@@ -1,8 +1,8 @@
+import {fetchPosts} from '@/services/postService';
 import PostListItem from '@/src/app/components/PostListItem';
 import {useAuth} from '@clerk/clerk-expo';
 import {useQuery} from '@tanstack/react-query';
 import {ActivityIndicator, FlatList, Text} from 'react-native';
-import {fetchPosts} from '../../../../services/postService';
 
 export default function HomeScreen() {
 	const {getToken} = useAuth();

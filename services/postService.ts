@@ -9,11 +9,7 @@ type Post = Tables<'posts'> & {
 	nb_comments: {count: number}[] | null;
 };
 
-// I would like the type of nb_comments[0].count or null ?
-
-type InsertPost = TablesInsert<'posts'> & {
-	nb_comments: Tables<'comments'>[] | null;
-};
+type InsertPost = TablesInsert<'posts'>;
 
 export const fetchPosts = async (token: string | null) => {
 	const supabase = createSupabaseClientWithToken(token);
@@ -49,8 +45,8 @@ export const fetchPostById = async (
 
 export const insertPost = async (
 	token: string | null,
-	post: InsertPost,
-): Promise<InsertPost> => {
+	post: InsertPost & {nb_comments: null},
+): Promise<InsertPost & {nb_comments: null}> => {
 	const supabase = createSupabaseClientWithToken(token);
 
 	const {data, error} = await supabase
