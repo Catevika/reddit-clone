@@ -1,4 +1,4 @@
-import {fetchComments} from '@/services/commentServices';
+import {fetchComments, insertComment} from '@/services/commentServices';
 import {deletePostById, fetchPostById} from '@/services/postService';
 import CommentListItem from '@/src/app/components/CommentListItem';
 import PostListItem from '@/src/app/components/PostListItem';
@@ -33,12 +33,14 @@ export default function DetailedPost() {
 	const insets = useSafeAreaInsets();
 
 	const [comment, setComment] = useState<string>('');
+	const [replyingToId, setReplyingToId] = useState<string | null>(null);
+
 	const [isInputFocused, setIsInputFocused] = useState<boolean>(false);
 	const inputRef = useRef<TextInput | null>(null);
 
 	// useCallback with memo inside CommentListItem prevents re-renders when replying to a comment - must be before any other hook
 	const handleReplyPress = useCallback((commentId: string) => {
-		console.log(commentId);
+		setReplyingToId(commentId);
 		inputRef.current?.focus();
 	}, []);
 
@@ -82,6 +84,32 @@ export default function DetailedPost() {
 		onError: (error) => {
 			console.log(error);
 			Alert.alert('Failed to delete Post', error.message);
+		},
+	});
+
+	const {mutate: createComment} = useMutation({
+		mutationFn: async () => {
+			const token = await getToken();
+			if (!token) throw new Error('No token found');
+
+			return insertComment(token, {
+				comment: comment,
+				post_id: id,
+				parent_id: replyingToId,
+				user_id: user.id,
+			});
+		},
+		onSuccess: () => {
+			setComment('');
+			setReplyingToId(null);
+			queryClient.invalidateQueries({queryKey: ['comments', {post_id: id}]});
+			queryClient.invalidateQueries({
+				queryKey: ['comments', {parent_id: replyingToId}],
+			});
+		},
+		onError: (error) => {
+			console.log(error);
+			Alert.alert('Failed to create Comment', error.message);
 		},
 	});
 
@@ -165,7 +193,7 @@ export default function DetailedPost() {
 				{isInputFocused && (
 					<Pressable
 						disabled={!comment}
-						onPress={() => console.error('Pressed')}
+						onPress={() => createComment()}
 						style={{
 							backgroundColor: !comment ? 'lightgrey' : '#0d469b',
 							borderRadius: 15,

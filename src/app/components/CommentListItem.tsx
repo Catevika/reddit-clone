@@ -1,9 +1,9 @@
-import {fetchCommentReplies, type Comment} from '@/services/commentServices';
-import {useAuth} from '@clerk/clerk-expo';
-import {Entypo, MaterialCommunityIcons, Octicons} from '@expo/vector-icons';
-import {useQuery} from '@tanstack/react-query';
-import {memo, useState} from 'react';
-import {FlatList, Pressable, Text, View} from 'react-native';
+import { fetchCommentReplies, type Comment } from '@/services/commentServices';
+import { useAuth } from '@clerk/clerk-expo';
+import { Entypo, MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
+import { memo, useState } from 'react';
+import { FlatList, Pressable, Text, View } from 'react-native';
 
 type CommentListItemProps = {
 	comment: Comment;
@@ -75,7 +75,9 @@ const CommentListItem = ({
 			</View> */}
 
 			{/* Comment Content */}
-			<Text>{comment.comment}</Text>
+			<Text>
+				{comment.comment}
+			</Text>
 
 			{/* Comment Actions */}
 			<View

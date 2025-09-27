@@ -1,5 +1,5 @@
 import {createSupabaseClientWithToken} from '@/lib/supabase';
-import type {Tables} from '@/types/database.types';
+import type {Tables, TablesInsert} from '@/types/database.types';
 
 export type Comment = Tables<'comments'> & {
 	posts: Tables<'posts'>;
@@ -7,6 +7,8 @@ export type Comment = Tables<'comments'> & {
 	user: Tables<'users'>;
 	upvotes: number;
 };
+
+export type InsertComment = TablesInsert<'comments'>;
 
 export const fetchComments = async (
 	post_id: string,
@@ -41,21 +43,22 @@ export const fetchCommentReplies = async (
 	return data;
 };
 
-// export const insertComment = async (
-// 	token: string | null,
-// 	comment: InsertComment,
-// ): Promise<InsertComment> => {
-// 	const supabase = createSupabaseClientWithToken(token);
+export const insertComment = async (
+	token: string | null,
+	comment: InsertComment,
+): Promise<InsertComment> => {
+	const supabase = createSupabaseClientWithToken(token);
 
-// 	const {data, error} = await supabase
-// 		.from('comments')
-// 		.insert(comment)
-// 		.select()
-// 		.single();
+	const {data, error} = await supabase
+		.from('comments')
+		.insert(comment)
+		.select()
+		.single();
 
-// 	if (error || !data) throw error;
-// 	return data;
-// };
+	if (error || !data) throw error;
+
+	return data;
+};
 
 // export const deleteCommentById = async (token: string | null, id: string) => {
 // 	const supabase = createSupabaseClientWithToken(token);

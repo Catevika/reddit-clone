@@ -62,7 +62,6 @@ export default function CreateScreen() {
 			return result;
 		},
 		onSuccess: (data) => {
-			console.log(data);
 			queryClient.invalidateQueries({queryKey: ['posts']});
 			goBack();
 		},
