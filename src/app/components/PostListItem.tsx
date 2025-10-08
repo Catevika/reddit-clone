@@ -1,5 +1,6 @@
 import {fetchPostUpvotes} from '@/services/postService';
 import {createUpvote, selectMyVote} from '@/services/upvoteService';
+import PostImage from '@/src/app/components/PostImage';
 import type {Tables} from '@/types/database.types';
 import {useAuth, useUser} from '@clerk/clerk-expo';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -28,6 +29,9 @@ type PostListItemProps = {
 	post: Post;
 	isDetailedPost?: boolean;
 };
+
+const BUCKET = process.env.EXPO_PUBLIC_SUPABASE_BUCKET;
+if (!BUCKET) throw new Error('No storage bucket found');
 
 export default function PostListItem({
 	post,
@@ -162,10 +166,11 @@ export default function PostListItem({
 					<Text style={{fontWeight: 'bold', fontSize: 17, letterSpacing: 0.5}}>
 						{post.title}
 					</Text>
-					{shouldShowImage && post.image && (
-						<Image
-							source={{uri: post.image}}
+					{shouldShowImage && BUCKET && post.image && (
+						<PostImage
+							imageFileName={post.image}
 							style={{width: '100%', aspectRatio: 4 / 3, borderRadius: 15}}
+							resizeMode='cover'
 						/>
 					)}
 

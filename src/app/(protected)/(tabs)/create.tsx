@@ -1,8 +1,10 @@
 import {insertPost} from '@/services/postService';
 import {selectedGroupAtom} from '@/src/atoms';
+import {uploadImage} from '@/utils/supabaseImages';
 import {useAuth, useUser} from '@clerk/clerk-expo';
-import {AntDesign} from '@expo/vector-icons';
+import {AntDesign, Feather} from '@expo/vector-icons';
 import {useMutation, useQueryClient} from '@tanstack/react-query';
+import * as ImagePicker from 'expo-image-picker';
 import {Link, router} from 'expo-router';
 import {useAtom} from 'jotai';
 import {useState} from 'react';
@@ -20,6 +22,9 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
+const BUCKET = process.env.EXPO_PUBLIC_SUPABASE_BUCKET;
+if (!BUCKET) throw new Error('No storage bucket found');
+
 export default function CreateScreen() {
 	const {getToken} = useAuth();
 
@@ -28,20 +33,36 @@ export default function CreateScreen() {
 
 	const [title, setTitle] = useState<string>('');
 	const [bodyText, setBodyText] = useState<string>('');
+	const [image, setImage] = useState<string | null>(null);
 
 	const [group, setGroup] = useAtom(selectedGroupAtom);
 
 	const queryClient = useQueryClient();
 
+	const pickImage = async () => {
+		// No permissions request is necessary for launching the image library
+		let result = await ImagePicker.launchImageLibraryAsync({
+			mediaTypes: ['images'],
+			allowsEditing: true,
+			aspect: [4, 3],
+			quality: 1,
+		});
+
+		if (!result.canceled) {
+			setImage(result.assets[0].uri);
+		}
+	};
+
 	const goBack = () => {
 		setTitle('');
 		setBodyText('');
 		setGroup(null);
+		setImage(null);
 		router.back();
 	};
 
 	const {mutate: createPost, isPending} = useMutation({
-		mutationFn: async () => {
+		mutationFn: async (fileName: string | undefined) => {
 			const token = await getToken();
 			if (!token) throw new Error('No token found');
 
@@ -58,6 +79,7 @@ export default function CreateScreen() {
 				description: bodyText,
 				group_id: group.id,
 				user_id: user.id,
+				image: fileName,
 				nb_comments: null,
 			});
 			return result;
@@ -72,6 +94,18 @@ export default function CreateScreen() {
 		},
 	});
 
+	const createPostWithImage = async () => {
+		const token = await getToken();
+		if (!token) throw new Error('No token found');
+
+		const fileName =
+			BUCKET && image
+				? await uploadImage(BUCKET, image, user.id, token)
+				: undefined;
+
+		createPost(fileName);
+	};
+
 	return (
 		<SafeAreaView
 			style={{flex: 1, backgroundColor: 'white', paddingHorizontal: 10}}>
@@ -84,7 +118,7 @@ export default function CreateScreen() {
 					onPress={() => goBack()}
 				/>
 				<Pressable
-					onPress={() => createPost()}
+					onPress={() => createPostWithImage()}
 					disabled={isPending}
 					style={{marginLeft: 'auto'}}>
 					<Text style={styles.postText}>
@@ -128,6 +162,29 @@ export default function CreateScreen() {
 						scrollEnabled={false}
 						style={{fontSize: 20, fontWeight: 'bold', paddingVertical: 20}}
 					/>
+					{image && (
+						<View style={{paddingBottom: 20}}>
+							<AntDesign
+								name='close'
+								size={25}
+								color='white'
+								onPress={() => setImage(null)}
+								style={{
+									position: 'absolute',
+									zIndex: 1,
+									right: 10,
+									top: 10,
+									padding: 5,
+									backgroundColor: '#00000090',
+									borderRadius: 20,
+								}}
+							/>
+							<Image
+								source={{uri: image}}
+								style={{width: '100%', aspectRatio: 1}}
+							/>
+						</View>
+					)}
 					<TextInput
 						value={bodyText}
 						multiline
@@ -136,6 +193,30 @@ export default function CreateScreen() {
 						onChangeText={setBodyText}
 					/>
 				</ScrollView>
+				{/* FOOTER */}
+				<View style={{flexDirection: 'row', gap: 20, padding: 10}}>
+					<Feather
+						name='link'
+						size={20}
+						color='black'
+					/>
+					<Feather
+						name='image'
+						size={20}
+						color='black'
+						onPress={pickImage}
+					/>
+					<Feather
+						name='youtube'
+						size={20}
+						color='black'
+					/>
+					<Feather
+						name='list'
+						size={20}
+						color='black'
+					/>
+				</View>
 			</KeyboardAvoidingView>
 		</SafeAreaView>
 	);

@@ -84,6 +84,7 @@ export type Database = {
           group_id: string
           id: string
           image: string | null
+          nb_comments: number | null
           title: string
           user_id: string | null
         }
@@ -93,6 +94,7 @@ export type Database = {
           group_id: string
           id?: string
           image?: string | null
+          nb_comments?: number | null
           title: string
           user_id?: string | null
         }
@@ -102,6 +104,7 @@ export type Database = {
           group_id?: string
           id?: string
           image?: string | null
+          nb_comments?: number | null
           title?: string
           user_id?: string | null
         }
