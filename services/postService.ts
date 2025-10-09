@@ -11,18 +11,30 @@ type Post = Tables<'posts'> & {
 
 type InsertPost = TablesInsert<'posts'>;
 
-export const fetchPosts = async (token: string | null) => {
+export const fetchPosts = async (
+	offset: number,
+	limit: number,
+	token: string,
+): Promise<{data: Post[]; hasMore: boolean}> => {
 	const supabase = createSupabaseClientWithToken(token);
 
-	const {data, error} = await supabase
+	const {data, error, count} = await supabase
 		.from('posts')
 		.select(
 			'*, group:groups(*), upvotes(value.sum()), nb_comments:comments(count)',
+			{count: 'exact'},
 		)
-		.order('created_at', {ascending: false});
+		.order('created_at', {ascending: false})
+		.range(offset, offset + limit - 1);
 
 	if (error) throw error;
-	return data;
+
+	const hasMore = count !== null && offset + limit < count;
+
+	return {
+		data: data ?? [],
+		hasMore,
+	};
 };
 
 export const fetchPostById = async (

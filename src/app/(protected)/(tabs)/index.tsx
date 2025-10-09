@@ -1,35 +1,59 @@
 import {fetchPosts} from '@/services/postService';
-import PostListItem from '@/src/app/components/PostListItem';
+import type {Tables} from '@/types/database.types';
 import {useAuth} from '@clerk/clerk-expo';
-import {useQuery} from '@tanstack/react-query';
+import {useInfiniteQuery} from '@tanstack/react-query';
 import {ActivityIndicator, FlatList, Text} from 'react-native';
+import PostListItem from '../../components/PostListItem';
+
+type Post = Tables<'posts'> & {
+	user: Tables<'users'>;
+	group: Tables<'groups'>;
+	totalUpvotes: {sum: number}[];
+	upvote: Tables<'upvotes'>;
+	nb_comments: {count: number}[] | null;
+};
+
+const LIMIT = 2;
 
 export default function HomeScreen() {
 	const {getToken} = useAuth();
 
 	const {
-		data: posts,
+		data,
 		isLoading,
 		error,
 		refetch,
 		isRefetching,
-	} = useQuery({
+		fetchNextPage,
+		isFetchingNextPage,
+		hasNextPage,
+	} = useInfiniteQuery({
 		queryKey: ['posts'],
-		queryFn: async () => {
+		queryFn: async ({pageParam}) => {
 			const token = await getToken();
 			if (!token) throw new Error('No token found');
-			return fetchPosts(token);
+
+			const result = await fetchPosts(pageParam.offset, pageParam.limit, token);
+
+			return {
+				posts: result.data,
+				nextOffset: result.hasMore
+					? pageParam.offset + pageParam.limit
+					: undefined,
+			};
 		},
+
+		initialPageParam: {offset: 0, limit: LIMIT},
+		getNextPageParam: (lastPage) =>
+			lastPage.nextOffset !== undefined
+				? {offset: lastPage.nextOffset, limit: LIMIT}
+				: undefined,
 	});
 
-	if (isLoading) {
-		<ActivityIndicator />;
-	}
+	if (isLoading) return <ActivityIndicator />;
+	if (error) return <Text>Error loading posts</Text>;
 
-	if (error) {
-		console.log(error);
-		return <Text>Error fetching posts</Text>;
-	}
+	const posts = data?.pages.flatMap((page) => page.posts) || [];
 
 	return (
 		<FlatList
@@ -39,6 +63,9 @@ export default function HomeScreen() {
 			contentContainerStyle={{padding: 16}}
 			onRefresh={refetch}
 			refreshing={isRefetching}
+			onEndReachedThreshold={0.1}
+			onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
+			ListFooterComponent={isFetchingNextPage ? <ActivityIndicator /> : null}
 		/>
 	);
 }
